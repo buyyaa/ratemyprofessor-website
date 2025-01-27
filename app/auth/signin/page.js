@@ -50,6 +50,7 @@ export default function SignIn() {
                             onChange={(e) => setEmail(e.target.value)}
                         />
                     </div>
+                    {/* TODO: Add a checkbox for terms and conditions */}
 
                     <button
                         type="submit"
