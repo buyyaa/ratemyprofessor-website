@@ -79,54 +79,22 @@ const Pricing = () => {
                         <div className=" w-full max-w-lg">
                             <div className="relative flex flex-col h-full gap-5 lg:gap-8 z-10 bg-base-100 p-8 rounded-xl">
                                 <div className="flex items-center gap-8">
-                                    <div
-                                        className="flex items-center gap-2"
-                                        onClick={() => setPlan(plans[0])}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="monthly"
-                                            className="radio"
-                                            checked={plan.price === 0}
-                                        />
-                                        <span>Basic</span>
-                                    </div>
-                                    <div
-                                        className="flex items-center gap-2"
-                                        onClick={() => setPlan(plans[1])}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="monthly"
-                                            className="radio"
-                                            checked={plan.price === 0.99}
-                                        />
-                                        <span>30 Tokens</span>
-                                    </div>
-                                    <div
-                                        className="flex items-center gap-2"
-                                        onClick={() => setPlan(plans[2])}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="monthly"
-                                            className="radio"
-                                            checked={plan.price === 1.99}
-                                        />
-                                        <span>90 Tokens</span>
-                                    </div>
-                                    <div
-                                        className="flex items-center gap-2"
-                                        onClick={() => setPlan(plans[3])}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="monthly"
-                                            className="radio"
-                                            checked={plan.price === 10}
-                                        />
-                                        <span>Unlimited Pro</span>
-                                    </div>
+                                    {plans.map((p) => (
+                                        <div
+                                            key={p.name}
+                                            className="flex items-center gap-2 cursor-pointer"
+                                            onClick={() => setPlan(p)}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="plan"
+                                                className="radio"
+                                                checked={plan.name === p.name}
+                                                onChange={() => setPlan(p)}
+                                            />
+                                            <span>{p.name}</span>
+                                        </div>
+                                    ))}
                                 </div>
 
                                 <div className="flex gap-2">
