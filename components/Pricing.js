@@ -138,12 +138,6 @@ const Pricing = () => {
                                         className="btn btn-primary btn-block"
                                         target="_blank"
                                         href={plan.link}
-                                        onClick={(e) => {
-                                            if (!session && plan.price > 0) {
-                                                e.preventDefault();
-                                                signIn();
-                                            }
-                                        }}
                                     >
                                         {plan.price === 0 ? 'Get Started' : 'Subscribe'}
                                     </a>
