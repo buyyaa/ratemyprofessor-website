@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react';
 import Image from 'next/image';
 import logo from '@/app/icon.png';
 
@@ -23,7 +23,7 @@ export const plans = [
         name: '30 Tokens',
         price: 0.99,
         duration: '',
-        priceId: process.env.NEXT_PUBLIC_STRIPE_30_TOKENS_PRICE_ID,
+        link: 'https://buy.stripe.com/4gwfZF3PHaUKeJyfYZ',
         features: [
             '30 additional tokens',
             'Never expires',
@@ -35,7 +35,7 @@ export const plans = [
         name: '90 Tokens',
         price: 1.99,
         duration: '',
-        priceId: process.env.NEXT_PUBLIC_STRIPE_90_TOKENS_PRICE_ID,
+        link: 'https://buy.stripe.com/6oEaFlcmd9QG30Q28b',
         features: [
             '90 additional tokens',
             'Never expires',
@@ -47,7 +47,7 @@ export const plans = [
         name: 'Unlimited Pro',
         price: 10,
         duration: '/month',
-        priceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID,
+        link: 'https://buy.stripe.com/3cs3cTbi9fb0fNC002',
         features: [
             'Unlimited tokens',
             'Unlimited scans',
@@ -167,15 +167,17 @@ const Pricing = () => {
                                 </ul>
                                 <div className="space-y-2">
                                     <a
-                                        className="btn btn-primary btn-block "
+                                        className="btn btn-primary btn-block"
                                         target="_blank"
-                                        href={
-                                            plan.link +
-                                            '?prefilled_email=' +
-                                            session?.user?.email
-                                        }
+                                        href={plan.link}
+                                        onClick={(e) => {
+                                            if (!session && plan.price > 0) {
+                                                e.preventDefault();
+                                                signIn();
+                                            }
+                                        }}
                                     >
-                                        Subscribe
+                                        {plan.price === 0 ? 'Get Started' : 'Subscribe'}
                                     </a>
                                 </div>
                             </div>
