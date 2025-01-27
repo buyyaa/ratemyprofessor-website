@@ -140,12 +140,6 @@ const Pricing = () => {
                     ))}
                 </div>
 
-                <div className="mt-20 text-center">
-                    <h3 className="text-2xl font-bold mb-4">Money-Back Guarantee</h3>
-                    <p className="text-gray-400 max-w-2xl mx-auto">
-                        Not satisfied? Get a full refund within 30 days, no questions asked.
-                    </p>
-                </div>
             </div>
         </section>
     );
