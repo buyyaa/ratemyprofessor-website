@@ -2,7 +2,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 
 export async function POST(req) {
     try {
-        const { action, amount } = await req.json();
+        const { text } = await req.json();
         const apiKey = req.headers.get('x-api-key');
 
         if (!apiKey) {
@@ -12,6 +12,7 @@ export async function POST(req) {
             });
         }
 
+        // Verify user and check tokens
         const { db } = await connectToDatabase();
         const user = await db.collection('users').findOne({ apiKey });
 
@@ -22,35 +23,43 @@ export async function POST(req) {
             });
         }
 
-        // Check if user has enough tokens for the operation
-        if (action === 'subtract' && user.tokens < amount) {
+        if (user.tokens < 2) {
             return new Response(JSON.stringify({ error: 'Insufficient tokens' }), {
                 status: 403,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
 
-        // Update tokens
-        const updateOperation = action === 'add' ? 
-            { $inc: { tokens: amount } } : 
-            { $inc: { tokens: -amount } };
+        // Make request to Gemini API
+        const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.GEMINI_API_KEY}`
+            },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text }] }]
+            })
+        });
 
-        const result = await db.collection('users').findOneAndUpdate(
+        const data = await response.json();
+
+        // Deduct tokens
+        await db.collection('users').updateOne(
             { apiKey },
-            updateOperation,
-            { returnDocument: 'after' }
+            { $inc: { tokens: -2 } }
         );
 
         return new Response(JSON.stringify({
-            tokens: result.value.tokens,
-            message: 'Tokens updated successfully'
+            result: data,
+            tokens: user.tokens - 2
         }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
         });
 
     } catch (error) {
-        console.error('Token management error:', error);
+        console.error('Gemini API error:', error);
         return new Response(JSON.stringify({ error: error.message }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
