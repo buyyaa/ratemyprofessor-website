@@ -65,6 +65,26 @@ export const plans = [
     }
 ];
 
+const handleBasicSignup = async (email) => {
+  try {
+    const response = await fetch('/api/auth/basic-signup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email })
+    });
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+    
+    return data.apiKey; // Returns the API key for the extension
+  } catch (error) {
+    console.error('Signup error:', error);
+    throw error;
+  }
+};
+
 const Pricing = () => {
     const { data: session } = useSession();
     const [plan, setPlan] = useState(plans[0]);
@@ -125,17 +145,24 @@ const Pricing = () => {
                                 ))}
                             </ul>
 
-                            <a
-                                href={p.link}
-                                target="_blank"
-                                className={`w-full py-3 px-4 rounded-lg text-center font-semibold transition-colors duration-200 ${
-                                    p.popular
-                                        ? 'bg-white text-blue-600 hover:bg-gray-100'
-                                        : 'bg-blue-600 text-white hover:bg-blue-700'
-                                }`}
+                            <button
+                                onClick={() => {
+                                    const email = prompt('Please enter your email to get started:');
+                                    if (email) {
+                                        handleBasicSignup(email)
+                                            .then(apiKey => {
+                                                // Show success message with API key
+                                                alert(`Successfully signed up! Your API key: ${apiKey}`);
+                                            })
+                                            .catch(error => {
+                                                alert(`Error signing up: ${error.message}`);
+                                            });
+                                    }
+                                }}
+                                className="w-full py-3 px-4 rounded-lg text-center font-semibold bg-blue-600 text-white hover:bg-blue-700"
                             >
-                                {p.price === 0 ? 'Get Started' : 'Subscribe Now'}
-                            </a>
+                                Get Started
+                            </button>
                         </div>
                     ))}
                 </div>
