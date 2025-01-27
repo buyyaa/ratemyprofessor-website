@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+    scroll-behavior: smooth !important;
+}
+
+/* It makes the HTML progress bar filling smooth when value change. */
+progress::-webkit-progress-value {
+    transition: 0.6s width ease-out;
+}
+
+@layer base {
+    .btn {
+        @apply !capitalize;
+    }
+}
