@@ -65,29 +65,34 @@ export const plans = [
     }
 ];
 
-const handleBasicSignup = async (email) => {
-  try {
-    const response = await fetch('/api/auth/basic-signup', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email })
-    });
-
-    const data = await response.json();
-    if (data.error) throw new Error(data.error);
-    
-    return data.apiKey; // Returns the API key for the extension
-  } catch (error) {
-    console.error('Signup error:', error);
-    throw error;
-  }
-};
-
 const Pricing = () => {
     const { data: session } = useSession();
     const [plan, setPlan] = useState(plans[0]);
+    const [showEmailModal, setShowEmailModal] = useState(false);
+    const [email, setEmail] = useState('');
+    const [message, setMessage] = useState('');
+
+    const handleBasicSignup = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await fetch('/api/auth/basic-signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setMessage('Please enter this email in the extension to start using your tokens!');
+            } else {
+                setMessage(data.error || 'An error occurred');
+            }
+        } catch (error) {
+            setMessage('Failed to sign up. Please try again.');
+        }
+    };
 
     return (
         <section className="bg-gray-900 text-white">
@@ -146,18 +151,9 @@ const Pricing = () => {
                             </ul>
 
                             <button
-                                onClick={() => {
-                                    const email = prompt('Please enter your email to get started:');
-                                    if (email) {
-                                        handleBasicSignup(email)
-                                            .then(apiKey => {
-                                                // Show success message with API key
-                                                alert(`Successfully signed up! Your API key: ${apiKey}`);
-                                            })
-                                            .catch(error => {
-                                                alert(`Error signing up: ${error.message}`);
-                                            });
-                                    }
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    setShowEmailModal(true);
                                 }}
                                 className="w-full py-3 px-4 rounded-lg text-center font-semibold bg-blue-600 text-white hover:bg-blue-700"
                             >
@@ -166,6 +162,27 @@ const Pricing = () => {
                         </div>
                     ))}
                 </div>
+
+                {/* Email Modal */}
+                {showEmailModal && (
+                    <div className="modal">
+                        <div className="modal-content">
+                            <h3>Enter your email</h3>
+                            <form onSubmit={handleBasicSignup}>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="Enter your email"
+                                    required
+                                />
+                                <button type="submit">Submit</button>
+                            </form>
+                            {message && <p className="message">{message}</p>}
+                            <button onClick={() => setShowEmailModal(false)}>Close</button>
+                        </div>
+                    </div>
+                )}
 
             </div>
         </section>
