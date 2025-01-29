@@ -64,9 +64,9 @@ export const plans = [
         popular: true
     }
 ];
-
+//this is the old url link for the 30 tokens  TOKENS_30: 'https://buy.stripe.com/4gwfZF3PHaUKeJyfYZ'
 const STRIPE_LINKS = {
-    TOKENS_30: 'https://buy.stripe.com/4gwfZF3PHaUKeJyfYZ',
+    TOKENS_30: 'https://buy.stripe.com/aEU4gXeul2oefNC148',
     TOKENS_90: 'https://buy.stripe.com/6oEaFlcmd9QG30Q28b',
     PRO: 'https://buy.stripe.com/3cs3cTbi9fb0fNC002'
 };
@@ -106,6 +106,32 @@ const Pricing = () => {
         } catch (error) {
             console.error('Registration error:', error);
             alert('Error registering. Please try again.');
+        }
+    };
+
+    const handleTokenPurchase = async (email) => {
+        try {
+            const response = await fetch('/api/tokens', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email,
+                    action: 'purchase',
+                    stripeSessionId: 'manual_purchase' // You can implement proper Stripe session handling later
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to process purchase');
+            }
+
+            const data = await response.json();
+            alert('Purchase successful! Check your email for confirmation.');
+        } catch (error) {
+            console.error('Purchase error:', error);
+            alert('Error processing purchase. Please try again.');
         }
     };
 
@@ -231,6 +257,27 @@ const Pricing = () => {
                         </button>
                     </div>
                 )}
+
+                <div className="mt-8 text-center">
+                    <h3 className="text-lg font-semibold mb-4">Need more tokens?</h3>
+                    <a
+                        href={STRIPE_LINKS.TOKENS_30}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors"
+                        onClick={() => {
+                            const email = prompt('Please enter your email to confirm purchase:');
+                            if (email) {
+                                handleTokenPurchase(email);
+                            }
+                        }}
+                    >
+                        Buy 30 Tokens
+                    </a>
+                    <p className="mt-2 text-sm text-gray-600">
+                        Tokens will be added to your existing account
+                    </p>
+                </div>
 
             </div>
         </section>
