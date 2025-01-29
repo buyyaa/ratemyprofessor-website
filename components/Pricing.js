@@ -75,34 +75,37 @@ const Pricing = () => {
     const { data: session } = useSession();
     const [plan, setPlan] = useState(plans[0]);
     const [showEmailPopup, setShowEmailPopup] = useState(false);
+    const [showFollowUpMessage, setShowFollowUpMessage] = useState(false);
     const [email, setEmail] = useState('');
-    const [message, setMessage] = useState('');
 
     const handleBasicPlan = async (e) => {
         e.preventDefault();
         if (!email) {
-            setShowEmailPopup(true);
             return;
         }
 
         try {
-            const response = await fetch('/api/register-basic', {
+            const response = await fetch('/api/tokens', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email }),
+                body: JSON.stringify({ 
+                    email,
+                    action: 'register'
+                }),
             });
 
             if (response.ok) {
-                setMessage('Thank you for registering! Check your email for verification.');
                 setShowEmailPopup(false);
+                setShowFollowUpMessage(true);
                 setEmail('');
             } else {
                 throw new Error('Failed to register');
             }
         } catch (error) {
-            setMessage('Error registering. Please try again.');
+            console.error('Registration error:', error);
+            alert('Error registering. Please try again.');
         }
     };
 
@@ -205,6 +208,24 @@ const Pricing = () => {
                         <button
                             onClick={() => setShowEmailPopup(false)}
                             className="ml-4 text-white hover:text-indigo-200"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                )}
+
+                {/* Follow-up Message */}
+                {showFollowUpMessage && (
+                    <div className="fixed top-0 left-0 w-full bg-green-600 text-white py-4 px-6 flex justify-between items-center z-50">
+                        <div className="flex-1 text-center">
+                            <p className="font-semibold">🎉 Almost there! Complete your setup:</p>
+                            <p>1. Open the Professor Rater Pro extension</p>
+                            <p>2. Enter this same email: {email}</p>
+                            <p>3. Click verify to start using your free tokens</p>
+                        </div>
+                        <button
+                            onClick={() => setShowFollowUpMessage(false)}
+                            className="ml-4 text-white hover:text-green-200"
                         >
                             ✕
                         </button>
