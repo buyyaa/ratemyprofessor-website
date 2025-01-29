@@ -1,81 +1,65 @@
-import { connectToDatabase } from '@/lib/mongodb';
+import { NextResponse } from 'next/server';
+import clientPromise from '@/lib/mongodb';
 
-export async function GET(req) {
-    const apiKey = req.headers.get('x-api-key');
+export async function POST(request) {
+  try {
+    const { email, action } = await request.json();
     
-    try {
-        const { db } = await connectToDatabase();
-        
-        const user = await db.collection('users').findOne({ 
-            extensionApiKey: apiKey 
-        });
-        
-        if (!user) {
-            return new Response(JSON.stringify({ 
-                error: 'User not found' 
-            }), {
-                status: 404,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
-        
-        return new Response(JSON.stringify({ 
-            tokens: user.tokens,
-            subscriptionStatus: user.subscriptionStatus
-        }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    } catch (error) {
-        return new Response(JSON.stringify({ 
-            error: error.message 
-        }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+    if (!email) {
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
-}
 
-export async function POST(req) {
-    const apiKey = req.headers.get('x-api-key');
-    const { amount } = await req.json();
-    
-    try {
-        const { db } = await connectToDatabase();
-        
-        const result = await db.collection('users').updateOne(
-            { extensionApiKey: apiKey },
-            { 
-                $inc: { tokens: amount },
-                $set: { updatedAt: new Date() }
+    const client = await clientPromise;
+    const db = client.db('ratemyprofessor-db');
+    const users = db.collection('users');
+
+    // Handle different actions
+    switch (action) {
+      case 'register':
+        // Register new user with initial tokens
+        const result = await users.findOneAndUpdate(
+          { email },
+          { 
+            $setOnInsert: { 
+              email,
+              tokens: 20,
+              createdAt: new Date(),
+              updatedAt: new Date()
             }
+          },
+          { 
+            upsert: true,
+            returnDocument: 'after'
+          }
         );
-        
-        if (result.modifiedCount === 0) {
-            return new Response(JSON.stringify({ 
-                error: 'User not found' 
-            }), {
-                status: 404,
-                headers: { 'Content-Type': 'application/json' }
-            });
+        return NextResponse.json({ success: true, tokens: result.value.tokens });
+
+      case 'get':
+        // Get user's token balance
+        const user = await users.findOne({ email });
+        if (!user) {
+          return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
-        
-        const updatedUser = await db.collection('users').findOne({ 
-            extensionApiKey: apiKey 
-        });
-        
-        return new Response(JSON.stringify({ 
-            tokens: updatedUser.tokens 
-        }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    } catch (error) {
-        return new Response(JSON.stringify({ 
-            error: error.message 
-        }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return NextResponse.json({ tokens: user.tokens });
+
+      case 'update':
+        // Update user's token balance
+        const { amount } = await request.json();
+        const updateResult = await users.findOneAndUpdate(
+          { email },
+          { 
+            $inc: { tokens: amount },
+            $set: { updatedAt: new Date() }
+          },
+          { returnDocument: 'after' }
+        );
+        return NextResponse.json({ tokens: updateResult.value.tokens });
+
+      default:
+        return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
+  } catch (error) {
+    console.error('Database error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 } 
