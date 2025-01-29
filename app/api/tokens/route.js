@@ -13,11 +13,11 @@ export async function POST(request) {
     const db = client.db('ratemyprofessor-db');
     const users = db.collection('users');
 
-    // Handle different actions
+    let result;
+    
     switch (action) {
-      case 'register':
-        // Register new user with initial tokens
-        const result = await users.findOneAndUpdate(
+      case 'register': {
+        result = await users.findOneAndUpdate(
           { email },
           { 
             $setOnInsert: { 
@@ -33,19 +33,19 @@ export async function POST(request) {
           }
         );
         return NextResponse.json({ success: true, tokens: result.value.tokens });
+      }
 
-      case 'get':
-        // Get user's token balance
+      case 'get': {
         const user = await users.findOne({ email });
         if (!user) {
           return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
         return NextResponse.json({ tokens: user.tokens });
+      }
 
-      case 'update':
-        // Update user's token balance
+      case 'update': {
         const { amount } = await request.json();
-        const updateResult = await users.findOneAndUpdate(
+        result = await users.findOneAndUpdate(
           { email },
           { 
             $inc: { tokens: amount },
@@ -53,7 +53,8 @@ export async function POST(request) {
           },
           { returnDocument: 'after' }
         );
-        return NextResponse.json({ tokens: updateResult.value.tokens });
+        return NextResponse.json({ tokens: result.value.tokens });
+      }
 
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
