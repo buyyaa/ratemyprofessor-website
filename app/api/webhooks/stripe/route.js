@@ -6,6 +6,10 @@ import { sendTokenPurchaseEmail } from '@/lib/email';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
+// New way to configure the API route
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
+
 export async function POST(req) {
     try {
         const body = await req.text();
@@ -62,10 +66,4 @@ export async function POST(req) {
             { status: 500 }
         );
     }
-}
-
-export const config = {
-    api: {
-        bodyParser: false,
-    },
-}; 
+} 
