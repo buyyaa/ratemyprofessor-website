@@ -74,15 +74,14 @@ const STRIPE_LINKS = {
 const Pricing = () => {
     const { data: session } = useSession();
     const [plan, setPlan] = useState(plans[0]);
-    const [showEmailModal, setShowEmailModal] = useState(false);
+    const [showEmailPopup, setShowEmailPopup] = useState(false);
     const [email, setEmail] = useState('');
-    const [showEmailInput, setShowEmailInput] = useState(false);
     const [message, setMessage] = useState('');
 
     const handleBasicPlan = async (e) => {
         e.preventDefault();
         if (!email) {
-            setShowEmailInput(true);
+            setShowEmailPopup(true);
             return;
         }
 
@@ -97,7 +96,7 @@ const Pricing = () => {
 
             if (response.ok) {
                 setMessage('Thank you for registering! Check your email for verification.');
-                setShowEmailInput(false);
+                setShowEmailPopup(false);
                 setEmail('');
             } else {
                 throw new Error('Failed to register');
@@ -163,53 +162,52 @@ const Pricing = () => {
                                 ))}
                             </ul>
 
-                            {p.name === 'Basic' && showEmailInput ? (
-                                <form onSubmit={handleBasicPlan} className="mt-6">
-                                    <input
-                                        type="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="Enter your email"
-                                        className="w-full px-4 py-2 border rounded"
-                                        required
-                                    />
-                                    <button
-                                        type="submit"
-                                        className="mt-2 w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                                    >
-                                        Start Free
-                                    </button>
-                                </form>
+                            {p.name === 'Basic' ? (
+                                <button
+                                    onClick={() => setShowEmailPopup(true)}
+                                    className="w-full py-3 px-4 rounded-lg text-center font-semibold bg-blue-600 text-white hover:bg-blue-700"
+                                >
+                                    Get Started
+                                </button>
                             ) : (
                                 <a
                                     href={p.link || STRIPE_LINKS[p.name.replace(' ', '_').toUpperCase()]}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     className="w-full py-3 px-4 rounded-lg text-center font-semibold bg-blue-600 text-white hover:bg-blue-700"
                                 >
-                                    {p.name === 'Basic' ? 'Get Started' : 'Buy Now'}
+                                    Buy Now
                                 </a>
                             )}
                         </div>
                     ))}
                 </div>
 
-                {/* Email Modal */}
-                {showEmailModal && (
-                    <div className="modal">
-                        <div className="modal-content">
-                            <h3>Enter your email</h3>
-                            <form onSubmit={handleBasicPlan}>
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="Enter your email"
-                                    required
-                                />
-                                <button type="submit">Submit</button>
-                            </form>
-                            {message && <p className="message">{message}</p>}
-                            <button onClick={() => setShowEmailModal(false)}>Close</button>
-                        </div>
+                {/* Email Popup */}
+                {showEmailPopup && (
+                    <div className="fixed top-0 left-0 w-full bg-indigo-600 text-white py-4 px-6 flex justify-between items-center z-50">
+                        <form onSubmit={handleBasicPlan} className="flex-1 flex justify-center items-center gap-4">
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Enter your email"
+                                className="px-4 py-2 rounded text-black w-64"
+                                required
+                            />
+                            <button
+                                type="submit"
+                                className="bg-white text-indigo-600 px-4 py-2 rounded hover:bg-indigo-50"
+                            >
+                                Start Free
+                            </button>
+                        </form>
+                        <button
+                            onClick={() => setShowEmailPopup(false)}
+                            className="ml-4 text-white hover:text-indigo-200"
+                        >
+                            ✕
+                        </button>
                     </div>
                 )}
 
