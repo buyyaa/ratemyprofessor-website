@@ -65,32 +65,45 @@ export const plans = [
     }
 ];
 
+const STRIPE_LINKS = {
+    TOKENS_30: 'https://buy.stripe.com/4gwfZF3PHaUKeJyfYZ',
+    TOKENS_90: 'https://buy.stripe.com/6oEaFlcmd9QG30Q28b',
+    PRO: 'https://buy.stripe.com/3cs3cTbi9fb0fNC002'
+};
+
 const Pricing = () => {
     const { data: session } = useSession();
     const [plan, setPlan] = useState(plans[0]);
     const [showEmailModal, setShowEmailModal] = useState(false);
     const [email, setEmail] = useState('');
+    const [showEmailInput, setShowEmailInput] = useState(false);
     const [message, setMessage] = useState('');
 
-    const handleBasicSignup = async (e) => {
+    const handleBasicPlan = async (e) => {
         e.preventDefault();
+        if (!email) {
+            setShowEmailInput(true);
+            return;
+        }
+
         try {
-            const response = await fetch('/api/auth/basic-signup', {
+            const response = await fetch('/api/register-basic', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email })
+                body: JSON.stringify({ email }),
             });
 
-            const data = await response.json();
-            if (data.success) {
-                setMessage('Please enter this email in the extension to start using your tokens!');
+            if (response.ok) {
+                setMessage('Thank you for registering! Check your email for verification.');
+                setShowEmailInput(false);
+                setEmail('');
             } else {
-                setMessage(data.error || 'An error occurred');
+                throw new Error('Failed to register');
             }
         } catch (error) {
-            setMessage('Failed to sign up. Please try again.');
+            setMessage('Error registering. Please try again.');
         }
     };
 
@@ -150,15 +163,31 @@ const Pricing = () => {
                                 ))}
                             </ul>
 
-                            <button
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    setShowEmailModal(true);
-                                }}
-                                className="w-full py-3 px-4 rounded-lg text-center font-semibold bg-blue-600 text-white hover:bg-blue-700"
-                            >
-                                Get Started
-                            </button>
+                            {p.name === 'Basic' && showEmailInput ? (
+                                <form onSubmit={handleBasicPlan} className="mt-6">
+                                    <input
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="Enter your email"
+                                        className="w-full px-4 py-2 border rounded"
+                                        required
+                                    />
+                                    <button
+                                        type="submit"
+                                        className="mt-2 w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                    >
+                                        Start Free
+                                    </button>
+                                </form>
+                            ) : (
+                                <a
+                                    href={p.link || STRIPE_LINKS[p.name.replace(' ', '_').toUpperCase()]}
+                                    className="w-full py-3 px-4 rounded-lg text-center font-semibold bg-blue-600 text-white hover:bg-blue-700"
+                                >
+                                    {p.name === 'Basic' ? 'Get Started' : 'Buy Now'}
+                                </a>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -168,7 +197,7 @@ const Pricing = () => {
                     <div className="modal">
                         <div className="modal-content">
                             <h3>Enter your email</h3>
-                            <form onSubmit={handleBasicSignup}>
+                            <form onSubmit={handleBasicPlan}>
                                 <input
                                     type="email"
                                     value={email}
