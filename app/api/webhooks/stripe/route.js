@@ -1,14 +1,36 @@
 import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
-import clientPromise from '@/lib/mongodb';
-import { sendTokenPurchaseEmail } from '@/lib/email';
+import { MongoClient } from 'mongodb';
+import { Stripe } from 'stripe';
+import nodemailer from 'nodemailer';
+
+// Remove edge runtime since we're using Node.js features
+// export const runtime = 'edge';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-// New way to configure the API route
-export const runtime = 'edge';
-export const dynamic = 'force-dynamic';
+// Email configuration using existing settings
+const transporter = nodemailer.createTransport(process.env.EMAIL_SERVER);
+
+async function sendEmail(email, tokens) {
+    try {
+        await transporter.sendMail({
+            from: process.env.EMAIL_FROM,
+            to: email,
+            subject: 'Token Purchase Confirmation',
+            html: `
+                <h2>Thank you for your purchase!</h2>
+                <p>Your account has been credited with ${tokens} additional tokens.</p>
+                <p>You can now use these tokens in the Professor Rater Pro extension.</p>
+                <br>
+                <p>Best regards,</p>
+                <p>The Professor Rater Pro Team</p>
+            `
+        });
+    } catch (error) {
+        console.error('Email sending error:', error);
+    }
+}
 
 export async function POST(req) {
     try {
@@ -31,7 +53,7 @@ export async function POST(req) {
             const customerEmail = session.customer_email;
 
             // Connect to MongoDB
-            const client = await clientPromise;
+            const client = await MongoClient.connect(process.env.MONGODB_URI);
             const db = client.db('ratemyprofessor-db');
             const users = db.collection('users');
 
@@ -53,9 +75,11 @@ export async function POST(req) {
             );
 
             if (result.value) {
-                // Send confirmation email
-                await sendTokenPurchaseEmail(customerEmail, 30);
+                // Send confirmation email using existing email configuration
+                await sendEmail(customerEmail, 30);
             }
+
+            await client.close();
         }
 
         return NextResponse.json({ received: true });
