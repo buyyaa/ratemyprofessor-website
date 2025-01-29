@@ -1,82 +1,106 @@
-import { connectToDatabase } from '@/lib/mongodb';
-
+import { NextResponse } from 'next/server';
+import clientPromise from '@/lib/mongodb';
 
 export async function GET(req) {
     const apiKey = req.headers.get('x-api-key');
     
     try {
-        const { db } = await connectToDatabase();
+        const client = await clientPromise;
+        const db = client.db('ratemyprofessor-db');
         
         const user = await db.collection('users').findOne({ 
             extensionApiKey: apiKey 
         });
         
         if (!user) {
-            return new Response(JSON.stringify({ 
+            return NextResponse.json({ 
                 error: 'User not found' 
-            }), {
-                status: 404,
-                headers: { 'Content-Type': 'application/json' }
-            });
+            }, { status: 404 });
         }
         
-        return new Response(JSON.stringify({ 
+        return NextResponse.json({ 
             tokens: user.tokens,
             subscriptionStatus: user.subscriptionStatus
-        }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        }, { status: 200 });
     } catch (error) {
-        return new Response(JSON.stringify({ 
+        console.error('Database error:', error);
+        return NextResponse.json({ 
             error: error.message 
-        }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        }, { status: 500 });
     }
 }
 
 export async function POST(req) {
-    const apiKey = req.headers.get('x-api-key');
-    const { amount } = await req.json();
-    
     try {
-        const { db } = await connectToDatabase();
+        const { email, action, amount } = await req.json();
+        const apiKey = req.headers.get('x-api-key');
         
-        const result = await db.collection('users').updateOne(
-            { extensionApiKey: apiKey },
-            { 
-                $inc: { tokens: amount },
-                $set: { updatedAt: new Date() }
+        const client = await clientPromise;
+        const db = client.db('ratemyprofessor-db');
+        const users = db.collection('users');
+
+        switch (action) {
+            case 'register': {
+                // Generate a unique API key for the extension
+                const extensionApiKey = crypto.randomUUID();
+                
+                const result = await users.findOneAndUpdate(
+                    { email },
+                    { 
+                        $setOnInsert: { 
+                            email,
+                            extensionApiKey,
+                            tokens: 20,
+                            subscriptionStatus: 'basic',
+                            createdAt: new Date()
+                        },
+                        $set: { 
+                            updatedAt: new Date() 
+                        }
+                    },
+                    { 
+                        upsert: true,
+                        returnDocument: 'after'
+                    }
+                );
+                
+                return NextResponse.json({
+                    success: true,
+                    extensionApiKey: result.value.extensionApiKey,
+                    tokens: result.value.tokens
+                });
             }
-        );
-        
-        if (result.modifiedCount === 0) {
-            return new Response(JSON.stringify({ 
-                error: 'User not found' 
-            }), {
-                status: 404,
-                headers: { 'Content-Type': 'application/json' }
-            });
+
+            case 'update': {
+                const result = await users.findOneAndUpdate(
+                    { extensionApiKey: apiKey },
+                    { 
+                        $inc: { tokens: amount },
+                        $set: { updatedAt: new Date() }
+                    },
+                    { returnDocument: 'after' }
+                );
+
+                if (!result.value) {
+                    return NextResponse.json({ 
+                        error: 'User not found' 
+                    }, { status: 404 });
+                }
+
+                return NextResponse.json({ 
+                    tokens: result.value.tokens 
+                });
+            }
+
+            default:
+                return NextResponse.json({ 
+                    error: 'Invalid action' 
+                }, { status: 400 });
         }
-        
-        const updatedUser = await db.collection('users').findOne({ 
-            extensionApiKey: apiKey 
-        });
-        
-        return new Response(JSON.stringify({ 
-            tokens: updatedUser.tokens 
-        }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
     } catch (error) {
-        return new Response(JSON.stringify({ 
+        console.error('Database error:', error);
+        return NextResponse.json({ 
             error: error.message 
-        }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        }, { status: 500 });
     }
 } 
