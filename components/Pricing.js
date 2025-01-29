@@ -23,7 +23,7 @@ export const plans = [
     {
         name: '30 Tokens',
         price: 0.99,
-        duration: '',
+        duration: '/One Time Payment',
         link: 'https://buy.stripe.com/4gwfZF3PHaUKeJyfYZ',
         features: [
             '30 additional tokens',
@@ -36,7 +36,7 @@ export const plans = [
     {
         name: '90 Tokens',
         price: 1.99,
-        duration: '',
+        duration: '/One Time Payment',
         link: 'https://buy.stripe.com/6oEaFlcmd9QG30Q28b',
         features: [
             '90 additional tokens',
@@ -49,7 +49,7 @@ export const plans = [
     {
         name: 'Unlimited Pro',
         price: 10,
-        duration: '/month',
+        duration: '/One Time Payment',
         link: 'https://buy.stripe.com/3cs3cTbi9fb0fNC002',
         features: [
             'Unlimited tokens',
@@ -66,7 +66,7 @@ export const plans = [
 ];
 //this is the old url link for the 30 tokens  TOKENS_30: 'https://buy.stripe.com/4gwfZF3PHaUKeJyfYZ'
 const STRIPE_LINKS = {
-    TOKENS_30: 'https://buy.stripe.com/aEU4gXeul2oefNC148',
+    TOKENS_30: 'https://buy.stripe.com/6oE8xdgCt6EufNC8wB',
     TOKENS_90: 'https://buy.stripe.com/6oEaFlcmd9QG30Q28b',
     PRO: 'https://buy.stripe.com/3cs3cTbi9fb0fNC002'
 };
@@ -110,10 +110,27 @@ const Pricing = () => {
     };
 
     const handleTokenPurchase = async (email) => {
-        // Store the email in localStorage before redirecting to Stripe
-        localStorage.setItem('pendingTokenPurchaseEmail', email);
-        // Redirect to Stripe payment link
-        window.open('https://buy.stripe.com/aEU4gXeul2oefNC148', '_blank');
+        try {
+            // Store the email in localStorage before redirecting to Stripe
+            localStorage.setItem('pendingTokenPurchaseEmail', email);
+            
+            // Get the current user's email from the extension if available
+            const extensionEmail = localStorage.getItem('userEmail');
+            
+            // Use either the provided email or the extension email
+            const purchaseEmail = email || extensionEmail;
+            
+            if (!purchaseEmail) {
+                alert('Please enter your email address');
+                return;
+            }
+
+            // Redirect to Stripe payment link with email parameter
+            window.open(`https://buy.stripe.com/6oE8xdgCt6EufNC8wB?prefilled_email=${encodeURIComponent(purchaseEmail)}`, '_blank');
+        } catch (error) {
+            console.error('Error handling token purchase:', error);
+            alert('There was an error processing your request. Please try again.');
+        }
     };
 
     return (
@@ -244,16 +261,22 @@ const Pricing = () => {
                     <h3 className="text-lg font-semibold mb-4">Need more tokens?</h3>
                     <button
                         onClick={() => {
-                            const email = prompt('Please enter your email to confirm purchase:');
-                            if (email) {
-                                handleTokenPurchase(email);
+                            // Try to get email from extension first
+                            const extensionEmail = localStorage.getItem('userEmail');
+                            if (extensionEmail) {
+                                handleTokenPurchase(extensionEmail);
+                            } else {
+                                const email = prompt('Please enter your email to confirm purchase:');
+                                if (email) {
+                                    handleTokenPurchase(email);
+                                }
                             }
                         }}
                         className="inline-block bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors"
                     >
                         Buy 30 Tokens
                     </button>
-                    <p className="mt-2 text-sm text-gray-600">
+                    <p className="mt-2 text-sm text-gray-400">
                         Complete payment to add tokens to your account
                     </p>
                 </div>
