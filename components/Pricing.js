@@ -5,7 +5,7 @@ import { useSession, signIn } from 'next-auth/react';
 import Image from 'next/image';
 import logo from '@/app/icon.png';
 
-// Stripe Plans >> fill in your own priceId & link
+// Stripe Test Mode Links >> DO NOT USE IN PRODUCTION
 export const plans = [
     {
         name: 'Basic',
@@ -24,7 +24,8 @@ export const plans = [
         name: '30 Tokens',
         price: 0.99,
         duration: '/One Time Payment',
-        link: 'https://buy.stripe.com/4gwfZF3PHaUKeJyfYZ',
+        // TEST MODE LINK - 30 Tokens
+        link: 'https://buy.stripe.com/test_bIY9ElbsH9Kl3dufYY',
         features: [
             '30 additional tokens',
             'Never expires',
@@ -37,7 +38,8 @@ export const plans = [
         name: '90 Tokens',
         price: 1.99,
         duration: '/One Time Payment',
-        link: 'https://buy.stripe.com/6oEaFlcmd9QG30Q28b',
+        // TEST MODE LINK - 90 Tokens
+        link: 'https://buy.stripe.com/test_00gg2JfIXe0B5lC8wx',
         features: [
             '90 additional tokens',
             'Never expires',
@@ -50,7 +52,8 @@ export const plans = [
         name: 'Unlimited Pro',
         price: 10,
         duration: '/One Time Payment',
-        link: 'https://buy.stripe.com/3cs3cTbi9fb0fNC002',
+        // TEST MODE LINK - Unlimited Pro
+        link: 'https://buy.stripe.com/test_aEU5o5aoD8GhaFWaEG',
         features: [
             'Unlimited tokens',
             'Unlimited scans',
@@ -64,11 +67,12 @@ export const plans = [
         popular: true
     }
 ];
-//this is the old url link for the 30 tokens  TOKENS_30: 'https://buy.stripe.com/4gwfZF3PHaUKeJyfYZ'
+
+// Stripe Test Mode Links Object
 const STRIPE_LINKS = {
-    TOKENS_30: 'https://buy.stripe.com/6oE8xdgCt6EufNC8wB',
-    TOKENS_90: 'https://buy.stripe.com/6oEaFlcmd9QG30Q28b',
-    PRO: 'https://buy.stripe.com/3cs3cTbi9fb0fNC002'
+    TOKENS_30: 'https://buy.stripe.com/test_bIY9ElbsH9Kl3dufYY',  // Test mode - 30 tokens
+    TOKENS_90: 'https://buy.stripe.com/test_00gg2JfIXe0B5lC8wx',  // Test mode - 90 tokens
+    PRO: 'https://buy.stripe.com/test_aEU5o5aoD8GhaFWaEG'        // Test mode - Unlimited Pro
 };
 
 const Pricing = () => {
@@ -125,8 +129,8 @@ const Pricing = () => {
                 return;
             }
 
-            // Redirect to Stripe payment link with email parameter
-            window.open(`https://buy.stripe.com/6oE8xdgCt6EufNC8wB?prefilled_email=${encodeURIComponent(purchaseEmail)}`, '_blank');
+            // Redirect to Stripe test payment link with email parameter
+            window.open(`${STRIPE_LINKS.TOKENS_30}?prefilled_email=${encodeURIComponent(purchaseEmail)}`, '_blank');
         } catch (error) {
             console.error('Error handling token purchase:', error);
             alert('There was an error processing your request. Please try again.');
@@ -256,12 +260,14 @@ const Pricing = () => {
                     </div>
                 )}
 
-                {/* Updated token purchase section */}
+                {/* Test Mode Token Purchase Section */}
                 <div className="mt-8 text-center">
                     <h3 className="text-lg font-semibold mb-4">Need more tokens?</h3>
+                    <div className="text-sm text-yellow-400 mb-2">
+                        ⚠️ Test Mode Enabled - No real charges will be made
+                    </div>
                     <button
                         onClick={() => {
-                            // Try to get email from extension first
                             const extensionEmail = localStorage.getItem('userEmail');
                             if (extensionEmail) {
                                 handleTokenPurchase(extensionEmail);
@@ -274,10 +280,10 @@ const Pricing = () => {
                         }}
                         className="inline-block bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors"
                     >
-                        Buy 30 Tokens
+                        Buy 30 Tokens (Test Mode)
                     </button>
                     <p className="mt-2 text-sm text-gray-400">
-                        Complete payment to add tokens to your account
+                        Test card: 4242 4242 4242 4242 | Exp: Any future date | CVC: Any 3 digits
                     </p>
                 </div>
 
