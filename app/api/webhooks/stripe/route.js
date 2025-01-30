@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { MongoClient } from 'mongodb';
 import { Stripe } from 'stripe';
 import nodemailer from 'nodemailer';
+import clientPromise from '@/lib/mongodb';
 
 // Remove edge runtime since we're using Node.js features
 // export const runtime = 'edge';
@@ -44,6 +44,10 @@ async function sendEmail(email, productConfig) {
 
 export async function POST(req) {
     try {
+        // Get MongoDB client
+        const client = await clientPromise;
+        const db = client.db('ratemyprofessor-db');
+        
         const body = await req.text();
         const signature = req.headers.get('stripe-signature');
 
@@ -71,11 +75,6 @@ export async function POST(req) {
                 return NextResponse.json({ error: 'Unknown product' }, { status: 400 });
             }
 
-            // Connect to MongoDB
-            const client = await MongoClient.connect(process.env.MONGODB_URI);
-            const db = client.db('ratemyprofessor-db');
-            const users = db.collection('users');
-
             // Prepare update based on product type
             const updateOperation = {
                 $set: {
@@ -100,6 +99,7 @@ export async function POST(req) {
             }
 
             // Update or create user
+            const users = db.collection('users');
             const result = await users.findOneAndUpdate(
                 { email: customerEmail },
                 updateOperation,
@@ -113,8 +113,6 @@ export async function POST(req) {
                 // Send confirmation email
                 await sendEmail(customerEmail, productConfig);
             }
-
-            await client.close();
         }
 
         return NextResponse.json({ received: true });
