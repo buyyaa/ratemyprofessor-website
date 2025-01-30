@@ -113,37 +113,63 @@ export async function POST(req) {
                 const db = client.db('ratemyprofessor-db');
                 const users = db.collection('users');
 
-                // Generate extension API key
-                const extensionApiKey = crypto.randomUUID();
-
-                // Update or create user document
-                const updateDoc = {
-                    $setOnInsert: {
+                // Check if user exists
+                const existingUser = await users.findOne({ email: customerEmail });
+                
+                if (existingUser) {
+                    console.log('Existing user found:', existingUser.email);
+                    
+                    // Handle unlimited pro upgrade
+                    if (config.tokens === -1) {
+                        // Update to pro status
+                        await users.updateOne(
+                            { email: customerEmail },
+                            {
+                                $set: {
+                                    subscriptionStatus: 'pro',
+                                    tokens: -1,
+                                    updatedAt: new Date()
+                                }
+                            }
+                        );
+                    } else {
+                        // Add tokens to existing amount if not already unlimited
+                        if (existingUser.tokens !== -1) {
+                            await users.updateOne(
+                                { email: customerEmail },
+                                {
+                                    $inc: { tokens: config.tokens },
+                                    $set: { updatedAt: new Date() }
+                                }
+                            );
+                        }
+                    }
+                    
+                    console.log('Updated existing user account');
+                } else {
+                    console.log('Creating new user account');
+                    // Create new user
+                    const extensionApiKey = crypto.randomUUID();
+                    await users.insertOne({
                         email: customerEmail,
-                        createdAt: new Date(),
-                    },
-                    $set: {
                         name: customerName,
                         extensionApiKey,
                         subscriptionStatus: config.tier,
                         tokens: config.tokens,
+                        createdAt: new Date(),
                         updatedAt: new Date()
-                    }
-                };
+                    });
+                }
 
-                const result = await users.findOneAndUpdate(
-                    { email: customerEmail },
-                    updateDoc,
-                    { 
-                        upsert: true,
-                        returnDocument: 'after'
-                    }
-                );
-
-                console.log('MongoDB update successful:', result);
+                // Get updated user data for email
+                const updatedUser = await users.findOne({ email: customerEmail });
+                console.log('Final user state:', updatedUser);
 
                 // Send confirmation email
-                const tokenText = config.tokens === -1 ? 'unlimited tokens' : `${config.tokens} tokens`;
+                const tokenText = config.tokens === -1 ? 
+                    'unlimited tokens' : 
+                    `${config.tokens} tokens (Total balance: ${updatedUser.tokens})`;
+
                 await transporter.sendMail({
                     from: process.env.EMAIL_FROM,
                     to: customerEmail,
@@ -151,7 +177,7 @@ export async function POST(req) {
                     html: `
                         <h2>Thank you for your purchase, ${customerName}!</h2>
                         <p>Your account has been credited with ${tokenText}.</p>
-                        <p>Your extension API key: ${extensionApiKey}</p>
+                        <p>Your extension API key: ${updatedUser.extensionApiKey}</p>
                         <p>You can now use these tokens in the Professor Rater Pro extension.</p>
                         <br>
                         <p>Best regards,</p>
