@@ -75,22 +75,28 @@ export async function POST(req) {
         }
 
         if (event.type === 'checkout.session.completed') {
-            console.log('Processing completed checkout');
-            
             const session = event.data.object;
-            const customerEmail = session.customer_details?.email;
-            
-            if (!customerEmail) {
-                console.error('No customer email found in session:', session);
-                return NextResponse.json({ error: 'No customer email found' }, { status: 400 });
-            }
-            
+            console.log('Processing session:', session.id);
+
+            // Get session details directly without customer lookup
+            const sessionWithLineItems = await stripe.checkout.sessions.retrieve(
+                session.id,
+                {
+                    expand: ['line_items']
+                }
+            );
+
+            const customerEmail = session.customer_details?.email || '';
             console.log('Customer email:', customerEmail);
 
-            // Get line items to determine the package purchased
-            const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
-            const priceId = lineItems.data[0]?.price?.id;
-            console.log('Price ID from session:', priceId);
+            if (!customerEmail) {
+                console.error('No customer email found in session');
+                return NextResponse.json({ error: 'No customer email found' }, { status: 400 });
+            }
+
+            // Get price ID from the session
+            const priceId = sessionWithLineItems.line_items?.data[0]?.price?.id;
+            console.log('Price ID:', priceId);
 
             // Get configuration based on price ID
             const config = PRICE_CONFIGS[priceId];
