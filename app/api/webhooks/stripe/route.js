@@ -58,6 +58,11 @@ async function sendEmail(email, productConfig) {
     }
 }
 
+
+// Webhook handler
+
+
+
 export async function POST(req) {
     try {
         const body = await req.text();
