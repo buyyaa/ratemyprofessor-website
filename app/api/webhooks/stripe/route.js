@@ -60,15 +60,13 @@ async function sendEmail(email, productConfig) {
 
 export async function POST(req) {
     try {
-        console.log('Webhook received');
-        
         const body = await req.text();
         const signature = req.headers.get('stripe-signature');
 
         let event;
         try {
             event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-            console.log('Event verified:', event.type);
+            console.log('Event type:', event.type);
         } catch (err) {
             console.error('Webhook signature verification failed:', err.message);
             return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
@@ -76,71 +74,69 @@ export async function POST(req) {
 
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object;
-            console.log('Processing session:', session.id);
-
-            // Get session details directly without customer lookup
-            const sessionWithLineItems = await stripe.checkout.sessions.retrieve(
-                session.id,
-                {
-                    expand: ['line_items']
-                }
-            );
-
-            const customerEmail = session.customer_details?.email || '';
-            console.log('Customer email:', customerEmail);
-
-            if (!customerEmail) {
-                console.error('No customer email found in session');
-                return NextResponse.json({ error: 'No customer email found' }, { status: 400 });
-            }
-
-            // Get price ID from the session
-            const priceId = sessionWithLineItems.line_items?.data[0]?.price?.id;
-            console.log('Price ID:', priceId);
-
-            // Get configuration based on price ID
-            const config = PRICE_CONFIGS[priceId];
-            if (!config) {
-                console.error('Unknown price ID:', priceId);
-                return NextResponse.json({ error: 'Unknown price ID' }, { status: 400 });
-            }
-
-            // Connect to MongoDB
-            const client = await clientPromise;
-            const db = client.db('ratemyprofessor-db');
-            const users = db.collection('users');
-
-            // Generate extension API key if needed
-            const extensionApiKey = crypto.randomUUID();
-            console.log('Generated API key:', extensionApiKey);
-
-            // Create or update user document
-            const updateDoc = {
-                $setOnInsert: {
-                    email: customerEmail,
-                    createdAt: new Date(),
-                },
-                $set: {
-                    extensionApiKey,
-                    subscriptionStatus: config.tier,
-                    tokens: config.tokens,
-                    updatedAt: new Date()
-                }
-            };
-
-            const result = await users.findOneAndUpdate(
-                { email: customerEmail },
-                updateDoc,
-                { 
-                    upsert: true,
-                    returnDocument: 'after'
-                }
-            );
-
-            console.log('MongoDB update result:', result);
-
-            // Send confirmation email
+            
             try {
+                // Get the session with expanded data
+                const checkoutSession = await stripe.checkout.sessions.retrieve(session.id, {
+                    expand: ['line_items.data.price']
+                });
+                
+                // Get customer email from session details
+                const customerEmail = checkoutSession.customer_details?.email;
+                if (!customerEmail) {
+                    throw new Error('No customer email found in session');
+                }
+                
+                console.log('Processing purchase for email:', customerEmail);
+
+                // Get the price ID from the line items
+                const priceId = checkoutSession.line_items?.data[0]?.price?.id;
+                if (!priceId) {
+                    throw new Error('No price ID found in session');
+                }
+
+                console.log('Price ID:', priceId);
+                
+                // Get the configuration for this price
+                const config = PRICE_CONFIGS[priceId];
+                if (!config) {
+                    throw new Error(`Unknown price ID: ${priceId}`);
+                }
+
+                // Connect to MongoDB
+                const client = await clientPromise;
+                const db = client.db('ratemyprofessor-db');
+                const users = db.collection('users');
+
+                // Generate extension API key
+                const extensionApiKey = crypto.randomUUID();
+
+                // Update or create user document
+                const updateDoc = {
+                    $setOnInsert: {
+                        email: customerEmail,
+                        createdAt: new Date(),
+                    },
+                    $set: {
+                        extensionApiKey,
+                        subscriptionStatus: config.tier,
+                        tokens: config.tokens,
+                        updatedAt: new Date()
+                    }
+                };
+
+                const result = await users.findOneAndUpdate(
+                    { email: customerEmail },
+                    updateDoc,
+                    { 
+                        upsert: true,
+                        returnDocument: 'after'
+                    }
+                );
+
+                console.log('MongoDB update successful:', result);
+
+                // Send confirmation email
                 const tokenText = config.tokens === -1 ? 'unlimited tokens' : `${config.tokens} tokens`;
                 await transporter.sendMail({
                     from: process.env.EMAIL_FROM,
@@ -156,9 +152,12 @@ export async function POST(req) {
                         <p>The Professor Rater Pro Team</p>
                     `
                 });
-                console.log('Confirmation email sent');
+
+                console.log('Email sent successfully');
+
             } catch (error) {
-                console.error('Email sending error:', error);
+                console.error('Error processing webhook:', error);
+                return NextResponse.json({ error: error.message }, { status: 400 });
             }
         }
 
