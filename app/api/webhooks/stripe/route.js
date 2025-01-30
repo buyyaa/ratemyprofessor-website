@@ -76,31 +76,31 @@ export async function POST(req) {
             const session = event.data.object;
             
             try {
-                // Get the session with expanded data
-                const checkoutSession = await stripe.checkout.sessions.retrieve(session.id, {
-                    expand: ['line_items.data.price']
-                });
-                
-                // Get customer email from session details
-                const customerEmail = checkoutSession.customer_details?.email;
+                // Get customer details directly from the session
+                const customerDetails = session.customer_details;
+                const customerEmail = customerDetails?.email;
+                const customerName = customerDetails?.name || 'Customer';
+
                 if (!customerEmail) {
                     throw new Error('No customer email found in session');
                 }
                 
-                console.log('Processing purchase for email:', customerEmail);
+                console.log('Processing purchase for:', customerName, customerEmail);
 
-                // Get the price ID from the line items
-                const priceId = checkoutSession.line_items?.data[0]?.price?.id;
-                if (!priceId) {
-                    throw new Error('No price ID found in session');
-                }
+                // Get payment intent to get price information
+                const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent);
+                const amount = paymentIntent.amount;
 
-                console.log('Price ID:', priceId);
-                
-                // Get the configuration for this price
-                const config = PRICE_CONFIGS[priceId];
-                if (!config) {
-                    throw new Error(`Unknown price ID: ${priceId}`);
+                // Determine package based on amount
+                let config;
+                if (amount === 99) {
+                    config = PRICE_CONFIGS['price_1QmUNjRx1RbwTEuJ585357jc']; // 30 tokens
+                } else if (amount === 199) {
+                    config = PRICE_CONFIGS['price_1Qmkm1Rx1RbwTEuJMWHZO0iS']; // 90 tokens
+                } else if (amount === 1000) {
+                    config = PRICE_CONFIGS['price_1Qmkn9Rx1RbwTEuJJi5mDzKo']; // Unlimited
+                } else {
+                    throw new Error(`Unknown payment amount: ${amount}`);
                 }
 
                 // Connect to MongoDB
@@ -118,6 +118,7 @@ export async function POST(req) {
                         createdAt: new Date(),
                     },
                     $set: {
+                        name: customerName,
                         extensionApiKey,
                         subscriptionStatus: config.tier,
                         tokens: config.tokens,
@@ -143,7 +144,7 @@ export async function POST(req) {
                     to: customerEmail,
                     subject: `Purchase Confirmation - ${config.name}`,
                     html: `
-                        <h2>Thank you for your purchase!</h2>
+                        <h2>Thank you for your purchase, ${customerName}!</h2>
                         <p>Your account has been credited with ${tokenText}.</p>
                         <p>Your extension API key: ${extensionApiKey}</p>
                         <p>You can now use these tokens in the Professor Rater Pro extension.</p>
