@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { Stripe } from 'stripe';
 import nodemailer from 'nodemailer';
 import clientPromise from '@/lib/mongodb';
+import crypto from 'crypto';
 
 // Remove edge runtime since we're using Node.js features
 // export const runtime = 'edge';
@@ -44,74 +45,80 @@ async function sendEmail(email, productConfig) {
 
 export async function POST(req) {
     try {
-        // Get MongoDB client
-        const client = await clientPromise;
-        const db = client.db('ratemyprofessor-db');
+        console.log('Webhook received');
         
         const body = await req.text();
         const signature = req.headers.get('stripe-signature');
 
         let event;
         try {
-            event = stripe.webhooks.constructEvent(
-                body,
-                signature,
-                webhookSecret
-            );
+            event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+            console.log('Event verified:', event.type);
         } catch (err) {
+            console.error('Webhook signature verification failed:', err.message);
             return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
         }
 
         if (event.type === 'checkout.session.completed') {
+            console.log('Processing completed checkout');
+            
             const session = event.data.object;
             const customerEmail = session.customer_email;
-            const priceId = session.line_items?.data[0]?.price?.id;
-            
-            // Get product configuration based on price ID
-            const productConfig = PRODUCT_CONFIGS[priceId];
-            
-            if (!productConfig) {
-                console.error('Unknown product:', priceId);
-                return NextResponse.json({ error: 'Unknown product' }, { status: 400 });
-            }
+            console.log('Customer email:', customerEmail);
 
-            // Prepare update based on product type
-            const updateOperation = {
+            // Connect to MongoDB
+            const client = await clientPromise;
+            const db = client.db('ratemyprofessor-db');
+            const users = db.collection('users');
+
+            // Generate extension API key
+            const extensionApiKey = crypto.randomUUID();
+            console.log('Generated API key:', extensionApiKey);
+
+            // Create or update user document
+            const updateDoc = {
+                $setOnInsert: {
+                    email: customerEmail,
+                    createdAt: new Date(),
+                },
                 $set: {
-                    updatedAt: new Date(),
-                    lastPurchase: {
-                        date: new Date(),
-                        productName: productConfig.name,
-                        stripeSessionId: session.id
-                    }
+                    extensionApiKey,
+                    subscriptionStatus: 'basic',
+                    tokens: 30,
+                    updatedAt: new Date()
                 }
             };
 
-            // Add tokens update if applicable
-            if (productConfig.tokens > 0) {
-                updateOperation.$inc = { tokens: productConfig.tokens };
-            }
-
-            // Update subscription status for pro tier
-            if (productConfig.tier === 'pro') {
-                updateOperation.$set.subscriptionStatus = 'pro';
-                updateOperation.$set.tokens = -1; // Unlimited tokens
-            }
-
-            // Update or create user
-            const users = db.collection('users');
             const result = await users.findOneAndUpdate(
                 { email: customerEmail },
-                updateOperation,
+                updateDoc,
                 { 
                     upsert: true,
                     returnDocument: 'after'
                 }
             );
 
-            if (result.value) {
-                // Send confirmation email
-                await sendEmail(customerEmail, productConfig);
+            console.log('MongoDB update result:', result);
+
+            // Send confirmation email
+            try {
+                await transporter.sendMail({
+                    from: process.env.EMAIL_FROM,
+                    to: customerEmail,
+                    subject: 'Token Purchase Confirmation',
+                    html: `
+                        <h2>Thank you for your purchase!</h2>
+                        <p>Your account has been credited with 30 tokens.</p>
+                        <p>Your extension API key: ${extensionApiKey}</p>
+                        <p>You can now use these tokens in the Professor Rater Pro extension.</p>
+                        <br>
+                        <p>Best regards,</p>
+                        <p>The Professor Rater Pro Team</p>
+                    `
+                });
+                console.log('Confirmation email sent');
+            } catch (error) {
+                console.error('Email sending error:', error);
             }
         }
 
