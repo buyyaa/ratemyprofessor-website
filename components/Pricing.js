@@ -50,7 +50,8 @@ export const plans = [
     },
     {
         name: 'Unlimited Pro',
-        price: 10,
+        originalPrice: 10,
+        price: 7.99,
         duration: '/One Time Payment',
         // TEST MODE LINK - Unlimited Pro
         link: 'https://buy.stripe.com/test_aEU5o5aoD8GhaFWaEG',
@@ -64,7 +65,11 @@ export const plans = [
             'Priority support'
         ],
         description: 'For power users who need it all',
-        popular: true
+        popular: true,
+        discount: {
+            startDate: 'January 31',
+            endDate: 'February 28',
+        }
     }
 ];
 
@@ -170,9 +175,26 @@ const Pricing = () => {
                             </div>
 
                             <div className="flex items-baseline mb-8">
-                                <span className="text-4xl font-bold">${p.price}</span>
+                                {p.originalPrice ? (
+                                    <>
+                                        <span className="text-2xl text-gray-400 line-through mr-2">
+                                            ${p.originalPrice}
+                                        </span>
+                                        <span className="text-4xl font-bold text-green-400">
+                                            ${p.price}
+                                        </span>
+                                    </>
+                                ) : (
+                                    <span className="text-4xl font-bold">${p.price}</span>
+                                )}
                                 <span className="text-gray-400 ml-1">{p.duration}</span>
                             </div>
+
+                            {p.discount && (
+                                <div className="mb-4 text-sm text-yellow-300">
+                                    Limited time offer: {p.discount.startDate} - {p.discount.endDate}
+                                </div>
+                            )}
 
                             <ul className="space-y-4 mb-8">
                                 {p.features.map((feature, i) => (
