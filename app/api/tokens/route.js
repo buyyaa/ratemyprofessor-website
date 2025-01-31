@@ -75,6 +75,8 @@ export async function POST(req) {
             case 'verify': {
                 // Check if email exists in database
                 const user = await users.findOne({ email });
+                console.log('Verifying email:', email, 'User found:', !!user); // Debug log
+                
                 if (!user) {
                     return NextResponse.json({
                         success: false,
