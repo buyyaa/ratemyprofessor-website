@@ -73,25 +73,28 @@ export async function POST(req) {
 
         switch (action) {
             case 'register': {
-                // Generate a unique API key for the extension
-                const extensionApiKey = crypto.randomUUID();
+                // Check if user exists first
+                const existingUser = await users.findOne({ email });
+                
+                if (!existingUser) {
+                    return NextResponse.json({
+                        success: false,
+                        error: 'User not found. Please purchase tokens first.'
+                    }, { status: 404 });
+                }
+                
+                // If user exists but doesn't have an extension API key, generate one
+                const extensionApiKey = existingUser.extensionApiKey || crypto.randomUUID();
                 
                 const result = await users.findOneAndUpdate(
                     { email },
                     { 
-                        $setOnInsert: { 
-                            email,
-                            extensionApiKey,
-                            tokens: 20,
-                            subscriptionStatus: 'basic',
-                            createdAt: new Date()
-                        },
                         $set: { 
+                            extensionApiKey,
                             updatedAt: new Date() 
                         }
                     },
                     { 
-                        upsert: true,
                         returnDocument: 'after'
                     }
                 );
