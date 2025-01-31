@@ -8,8 +8,8 @@ const transporter = nodemailer.createTransport({
     port: 587,
     secure: false,
     auth: {
-        user: "ayyubalhasan@gmail.com",
-        pass: "bkmavuajndmtghch"
+        //user: "ayyubalhasan@gmail.com",
+        //pass: "bkmavuajndmtghch"
     }
 });
 
@@ -72,6 +72,23 @@ export async function POST(req) {
         const users = db.collection('users');
 
         switch (action) {
+            case 'verify': {
+                // Check if email exists in database
+                const user = await users.findOne({ email });
+                if (!user) {
+                    return NextResponse.json({
+                        success: false,
+                        error: 'Email not found. Please purchase tokens first.'
+                    }, { status: 404 });
+                }
+                
+                return NextResponse.json({
+                    success: true,
+                    tokens: user.tokens,
+                    extensionApiKey: user.extensionApiKey || crypto.randomUUID()
+                });
+            }
+
             case 'register': {
                 // Check if user exists first
                 const existingUser = await users.findOne({ email });
