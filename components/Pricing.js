@@ -138,18 +138,18 @@ const Pricing = () => {
     };
 
     return (
-        <div className="py-12">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center">
-                    <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
+        <section className="bg-gray-900 text-white">
+            <div className="py-24 px-8 max-w-7xl mx-auto">
+                <div className="flex flex-col text-center w-full mb-20">
+                    <h1 className="text-5xl font-bold mb-8 bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
                         Choose Your Plan
-                    </h2>
-                    <p className="mt-3 max-w-2xl mx-auto text-xl text-gray-300 sm:mt-4">
+                    </h1>
+                    <p className="text-xl text-gray-400 max-w-2xl mx-auto">
                         Get instant access to professor ratings, grade distributions, and AI-powered insights
                     </p>
                 </div>
 
-                <div className="mt-12 space-y-4 sm:mt-16 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-6 lg:max-w-4xl lg:mx-auto xl:max-w-none xl:mx-0 xl:grid-cols-4">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {plans.map((p) => (
                         <div
                             key={p.name}
@@ -267,7 +267,7 @@ const Pricing = () => {
                     <a href="/terms" className="hover:text-white mx-4">Terms of Service</a>
                 </div>
             </div>
-        </div>
+        </section>
     );
 };
 
