@@ -25,7 +25,7 @@ export const plans = [
         price: 0.99,
         duration: '/One Time Payment',
         // TEST MODE LINK - 30 Tokens
-        link: 'https://buy.stripe.com/test_bIY9ElbsH9Kl3dufYY',
+        link: 'https://buy.stripe.com/test_00gg2J68n3lX29q4gj',
         features: [
             '30 additional tokens',
             'Never expires',
@@ -70,7 +70,7 @@ export const plans = [
 
 // Stripe Test Mode Links Object
 const STRIPE_LINKS = {
-    TOKENS_30: 'https://buy.stripe.com/test_bIY9ElbsH9Kl3dufYY',  // Test mode - 30 tokens
+    TOKENS_30: 'https://buy.stripe.com/test_00gg2J68n3lX29q4gj',  // Test mode - 30 tokens
     TOKENS_90: 'https://buy.stripe.com/test_00gg2JfIXe0B5lC8wx',  // Test mode - 90 tokens
     PRO: 'https://buy.stripe.com/test_aEU5o5aoD8GhaFWaEG'        // Test mode - Unlimited Pro
 };
