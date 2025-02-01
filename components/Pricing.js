@@ -5,7 +5,7 @@ import { useSession, signIn } from 'next-auth/react';
 import Image from 'next/image';
 import logo from '@/app/icon.png';
 
-// Stripe Test Mode Links >> DO NOT USE IN PRODUCTION
+
 export const plans = [
     {
         name: 'Basic',
@@ -14,7 +14,6 @@ export const plans = [
         features: [
             '20 tokens to start',
             '2 tokens per scan',
-            '2 tokens per AI analysis',
             'Basic professor stats',
             'Basic tag filtering'
         ],
@@ -24,8 +23,8 @@ export const plans = [
         name: '30 Tokens',
         price: 0.99,
         duration: '/One Time Payment',
-        // TEST MODE LINK - 30 Tokens
-        link: 'https://buy.stripe.com/test_00gg2J68n3lX29q4gj',
+        
+        link: 'https://buy.stripe.com/4gwfZF3PHaUKeJyfYZ',
         features: [
             '30 additional tokens',
             'Never expires',
@@ -38,8 +37,8 @@ export const plans = [
         name: '90 Tokens',
         price: 1.99,
         duration: '/One Time Payment',
-        // TEST MODE LINK - 90 Tokens
-        link: 'https://buy.stripe.com/test_00gg2JfIXe0B5lC8wx',
+        
+        link: 'https://buy.stripe.com/6oEaFlcmd9QG30Q28b',
         features: [
             '90 additional tokens',
             'Never expires',
@@ -53,8 +52,7 @@ export const plans = [
         originalPrice: 10,
         price: 7.99,
         duration: '/One Time Payment',
-        // TEST MODE LINK - Unlimited Pro
-        link: 'https://buy.stripe.com/test_aEU5o5aoD8GhaFWaEG',
+        link: 'https://buy.stripe.com/9AQaFl1Hzfb044UdQW',
         features: [
             'Unlimited tokens',
             'Unlimited scans',
@@ -75,9 +73,9 @@ export const plans = [
 
 // Stripe Test Mode Links Object
 const STRIPE_LINKS = {
-    TOKENS_30: 'https://buy.stripe.com/test_00gg2J68n3lX29q4gj',  // Test mode - 30 tokens
-    TOKENS_90: 'https://buy.stripe.com/test_00gg2JfIXe0B5lC8wx',  // Test mode - 90 tokens
-    PRO: 'https://buy.stripe.com/test_aEU5o5aoD8GhaFWaEG'        // Test mode - Unlimited Pro
+    TOKENS_30: 'https://buy.stripe.com/4gwfZF3PHaUKeJyfYZ',  // Test mode - 30 tokens
+    TOKENS_90: 'https://buy.stripe.com/6oEaFlcmd9QG30Q28b',  // Test mode - 90 tokens
+    PRO: 'https://buy.stripe.com/9AQaFl1Hzfb044UdQW'        // Test mode - Unlimited Pro
 };
 
 const Pricing = () => {
