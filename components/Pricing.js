@@ -92,7 +92,7 @@ const Pricing = () => {
         }
 
         try {
-            const response = await fetch('/api/tokens', {
+            const response = await fetch('https://ratemyprofessor-website.vercel.app/api/verify-email', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -103,12 +103,18 @@ const Pricing = () => {
                 }),
             });
 
-            if (response.ok) {
+            if (!response.ok) {
+                throw new Error('Failed to register');
+            }
+
+            const data = await response.json();
+            
+            if (data.success) {
                 setShowEmailPopup(false);
                 setShowFollowUpMessage(true);
                 setEmail('');
             } else {
-                throw new Error('Failed to register');
+                throw new Error(data.message || 'Registration failed');
             }
         } catch (error) {
             console.error('Registration error:', error);
