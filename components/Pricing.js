@@ -92,7 +92,7 @@ const Pricing = () => {
         }
 
         try {
-            const response = await fetch('https://ratemyprofessor-website.vercel.app/api/verify-email', {
+            const response = await fetch('https://ratemyprofessor-website.vercel.app/api/tokens', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
