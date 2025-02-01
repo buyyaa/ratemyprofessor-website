@@ -87,12 +87,17 @@ const Pricing = () => {
 
     const handleBasicPlan = async (e) => {
         e.preventDefault();
+        console.log('Starting Basic Plan registration for email:', email); // Debug log
+
         if (!email) {
+            console.error('No email provided');
             return;
         }
 
         try {
-            const response = await fetch('https://ratemyprofessor-website.vercel.app/api/tokens', {
+            console.log('Sending request to:', 'https://ratemyprofessor-website.vercel.app/api/verify-email');
+            
+            const response = await fetch('https://ratemyprofessor-website.vercel.app/api/verify-email', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -103,22 +108,30 @@ const Pricing = () => {
                 }),
             });
 
+            console.log('Response status:', response.status); // Debug log
+            
+            const data = await response.json();
+            console.log('Response data:', data); // Debug log
+
             if (!response.ok) {
-                throw new Error('Failed to register');
+                throw new Error(`Failed to register: ${data.message || response.statusText}`);
             }
 
-            const data = await response.json();
-            
             if (data.success) {
+                console.log('Registration successful:', data); // Debug log
                 setShowEmailPopup(false);
                 setShowFollowUpMessage(true);
                 setEmail('');
             } else {
-                throw new Error(data.message || 'Registration failed');
+                throw new Error(data.message || 'Registration failed without error message');
             }
         } catch (error) {
-            console.error('Registration error:', error);
-            alert('Error registering. Please try again.');
+            console.error('Detailed registration error:', {
+                message: error.message,
+                stack: error.stack,
+                email: email
+            });
+            alert(`Error registering: ${error.message}`);
         }
     };
 
