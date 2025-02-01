@@ -1,3 +1,11 @@
+import { MongoClient } from 'mongodb';
+
+const uri = process.env.MONGODB_URI;
+const options = {
+    useUnifiedTopology: true,
+    useNewUrlParser: true,
+};
+
 export default async function handler(req, res) {
     console.log('API Request received:', {
         method: req.method,
@@ -13,6 +21,7 @@ export default async function handler(req, res) {
         });
     }
 
+    let client;
     try {
         const { email, action } = req.body;
         
@@ -34,7 +43,7 @@ export default async function handler(req, res) {
             });
         }
 
-        // Add your email validation logic here
+        // Email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             console.error('Invalid email format:', email);
@@ -44,9 +53,30 @@ export default async function handler(req, res) {
             });
         }
 
+        // Connect to MongoDB
+        client = await MongoClient.connect(uri, options);
+        const db = client.db('ratemyprofessor-db'); // Replace with your actual database name
+        const collection = db.collection('users');
+
+        // Check if user already exists
+        const existingUser = await collection.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email already registered'
+            });
+        }
+
+        // Create new user with tokens
+        const result = await collection.insertOne({
+            email,
+            tokens: 20,
+            createdAt: new Date(),
+            lastUpdated: new Date()
+        });
+
         console.log('Registration successful for:', email);
         
-        // Return success response with tokens
         return res.status(200).json({
             success: true,
             message: 'Registration successful',
@@ -65,5 +95,9 @@ export default async function handler(req, res) {
             message: 'Internal server error',
             error: error.message 
         });
+    } finally {
+        if (client) {
+            await client.close();
+        }
     }
 } 
