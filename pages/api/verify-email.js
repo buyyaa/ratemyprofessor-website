@@ -1,4 +1,5 @@
 import { MongoClient } from 'mongodb';
+import { v4 as uuidv4 } from 'uuid'; // Make sure to install uuid package
 
 const uri = process.env.MONGODB_URI;
 const options = {
@@ -55,7 +56,7 @@ export default async function handler(req, res) {
 
         // Connect to MongoDB
         client = await MongoClient.connect(uri, options);
-        const db = client.db('ratemyprofessor-db'); // Replace with your actual database name
+        const db = client.db('ratemyprofessor-db');
         const collection = db.collection('users');
 
         // Check if user already exists
@@ -67,10 +68,14 @@ export default async function handler(req, res) {
             });
         }
 
-        // Create new user with tokens
+        // Generate extension API key
+        const extensionApiKey = uuidv4();
+
+        // Create new free tier user
         const result = await collection.insertOne({
             email,
-            tokens: 20,
+            extensionApiKey,    // Add API key for verification
+            tokens: 20,         // Free tier starts with 20 tokens
             createdAt: new Date(),
             lastUpdated: new Date()
         });
@@ -81,7 +86,8 @@ export default async function handler(req, res) {
             success: true,
             message: 'Registration successful',
             tokens: 20,
-            email: email
+            email: email,
+            extensionApiKey    // Return the API key to the client
         });
 
     } catch (error) {
