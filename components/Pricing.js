@@ -311,3 +311,7 @@ const Pricing = () => {
 };
 
 export default Pricing;
+
+
+
+//this should be the tset for everything to finally work all together
