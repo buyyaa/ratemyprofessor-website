@@ -8,7 +8,7 @@ import logo from '@/app/icon.png';
 
 export const plans = [
     {
-        name: 'Free',
+        name: 'Basic',
         price: 0,
         duration: '',
         features: [
