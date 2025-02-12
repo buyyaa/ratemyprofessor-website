@@ -16,22 +16,17 @@ export async function POST(req) {
             return NextResponse.json({ error: 'Invalid API key' }, { status: 401 });
         }
 
-        // Check if it's time for monthly token refill
+        // Check if it's time for token refresh (30 days)
         const now = new Date();
-        const lastRefill = new Date(user.lastTokenRefillDate);
-        if (now.getMonth() !== lastRefill.getMonth() || now.getFullYear() !== lastRefill.getFullYear()) {
-            // Refill tokens based on subscription tier
-            switch (user.subscriptionTier) {
-                case 'pro':
-                    user.tokens = Infinity;  // Unlimited tokens
-                    break;
-                case 'premium':
-                    user.tokens = 100;  // 100 tokens per month
-                    break;
-                default:
-                    user.tokens = 20;  // 20 tokens per month for free tier
-            }
-            user.lastTokenRefillDate = now;
+        const lastRefresh = new Date(user.lastTokenRefreshDate);
+        const daysSinceRefresh = Math.floor((now - lastRefresh) / (1000 * 60 * 60 * 24));
+
+        if (daysSinceRefresh >= 30 && user.subscriptionTier !== 'pro') {
+            // Reset base tokens to 20 but keep purchased tokens
+            const purchasedTokens = user.purchasedTokens || 0;
+            user.tokens = 20 + purchasedTokens;
+            user.lastTokenRefreshDate = now;
+            await user.save();
         }
 
         // Calculate token cost
@@ -51,14 +46,14 @@ export async function POST(req) {
         if (user.subscriptionTier !== 'pro') {
             user.tokens -= tokenCost;
             user.totalTokensUsed += tokenCost;
+            await user.save();
         }
-
-        await user.save();
 
         return NextResponse.json({
             tokensRemaining: user.tokens,
             tokenCost,
-            tier: user.subscriptionTier
+            tier: user.subscriptionTier,
+            nextRefreshDate: new Date(user.lastTokenRefreshDate.getTime() + (30 * 24 * 60 * 60 * 1000))
         });
     } catch (error) {
         console.error('Token usage error:', error);

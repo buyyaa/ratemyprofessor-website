@@ -66,6 +66,14 @@ const userSchema = mongoose.Schema(
     monthlyTokenAllowance: {
       type: Number,
       default: 20  // Free tier monthly tokens
+    },
+    lastTokenRefreshDate: {
+      type: Date,
+      default: Date.now
+    },
+    purchasedTokens: {
+      type: Number,
+      default: 0  // Track separately purchased tokens
     }
   },
   {

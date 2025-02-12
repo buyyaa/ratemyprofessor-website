@@ -133,12 +133,15 @@ export async function POST(req) {
                             }
                         );
                     } else {
-                        // Add tokens to existing amount if not already unlimited
+                        // Add tokens to existing amount and update purchasedTokens
                         if (existingUser.tokens !== -1) {
                             await users.updateOne(
                                 { email: customerEmail },
                                 {
-                                    $inc: { tokens: config.tokens },
+                                    $inc: { 
+                                        tokens: config.tokens,
+                                        purchasedTokens: config.tokens 
+                                    },
                                     $set: { updatedAt: new Date() }
                                 }
                             );
@@ -148,14 +151,16 @@ export async function POST(req) {
                     console.log('Updated existing user account');
                 } else {
                     console.log('Creating new user account');
-                    // Create new user
+                    // Create new user with both free and purchased tokens
                     const extensionApiKey = crypto.randomUUID();
                     await users.insertOne({
                         email: customerEmail,
                         name: customerName,
                         extensionApiKey,
                         subscriptionStatus: config.tier,
-                        tokens: config.tokens,
+                        tokens: 20 + config.tokens, // Free tokens + purchased tokens
+                        purchasedTokens: config.tokens, // Track purchased tokens separately
+                        lastTokenRefreshDate: new Date(),
                         createdAt: new Date(),
                         updatedAt: new Date()
                     });
