@@ -232,7 +232,7 @@ const Pricing = () => {
                                 ))}
                             </ul>
 
-                            {p.name === 'Basic' ? (
+                            {p.name === 'Free' ? (
                                 <button
                                     onClick={() => setShowEmailPopup(true)}
                                     className="w-full py-3 px-4 rounded-lg text-center font-semibold bg-blue-600 text-white hover:bg-blue-700"
