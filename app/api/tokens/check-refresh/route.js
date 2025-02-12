@@ -37,3 +37,17 @@ export async function GET(req) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
+
+
+//this is the route that checks if the user's tokens need to be refreshed
+//it checks the user's last token refresh date and compares it to the current date
+//if the user's last token refresh date is more than 30 days ago, then the user's tokens need to be refreshed
+//the user's tokens are refreshed by adding the user's purchased tokens to the user's current tokens
+//the user's last token refresh date is updated to the current date
+
+//this route is used to check if the user's tokens need to be refreshed
+//it is used to update the user's tokens and last token refresh date
+//it is used to check if the user's tokens need to be refreshed
+//it is used to update the user's tokens and last token refresh date
+//it is used to check if the user's tokens need to be refreshed
+//it is used to update the user's tokens and last token refresh date
