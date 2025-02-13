@@ -52,7 +52,7 @@ export const plans = [
         originalPrice: 10,
         price: 7.99,
         duration: '/One Time Payment',
-        link: 'https://buy.stripe.com/9AQaFl1Hzfb044UdQW',
+        link: 'https://buy.stripe.com/eVafZFcmd7Iybxm3cj',
         features: [
             'Unlimited tokens',
             'Unlimited scans',
@@ -75,7 +75,7 @@ export const plans = [
 const STRIPE_LINKS = {
     TOKENS_30: 'https://buy.stripe.com/4gwfZF3PHaUKeJyfYZ',  // Test mode - 30 tokens
     TOKENS_90: 'https://buy.stripe.com/6oEaFlcmd9QG30Q28b',  // Test mode - 90 tokens
-    PRO: 'https://buy.stripe.com/9AQaFl1Hzfb044UdQW'        // Test mode - Unlimited Pro
+    PRO: 'https://buy.stripe.com/eVafZFcmd7Iybxm3cj'        // Test mode - Unlimited Pro
 };
 
 const Pricing = () => {
