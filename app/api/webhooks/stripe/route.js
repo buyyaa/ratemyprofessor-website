@@ -58,10 +58,13 @@ async function sendEmail(email, productConfig) {
     }
 }
 
-
 // Webhook handler
 
-
+export const config = {
+  api: {
+    bodyParser: false, // Important for webhook signatures
+  },
+};
 
 export async function POST(req) {
     try {
