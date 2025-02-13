@@ -60,6 +60,7 @@ async function sendEmail(email, productConfig) {
 
 // Webhook handler
 
+//send tyest
 
 
 export async function POST(req) {
