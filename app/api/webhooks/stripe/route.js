@@ -17,13 +17,13 @@ const transporter = nodemailer.createTransport(process.env.EMAIL_SERVER);
 
 // Define Stripe price IDs and their corresponding configurations
 const PRICE_CONFIGS = {
-    'price_1QmUNjRx1RbwTEuJ585357jc': { 
+    'price_1QlZxfRx1RbwTEuJHYZ3aF71': { 
         tokens: 30, 
         tier: 'basic', 
         price: 99,
         name: '30 Tokens Package'
     },
-    'price_1Qmkm1Rx1RbwTEuJMWHZO0iS': { 
+    'price_1QlZybRx1RbwTEuJTo32RGaA': { 
         tokens: 90, 
         tier: 'basic', 
         price: 199,
@@ -96,23 +96,15 @@ export async function POST(req) {
                 
                 console.log('Processing purchase for:', customerName, customerEmail);
 
-                // Get payment intent to get price information
-                const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent);
-                const amount = paymentIntent.amount;
-                console.log('Payment amount:', amount);
-
-                // Determine package based on amount
-                let config;
-                if (amount === 99) {
-                    config = PRICE_CONFIGS['price_1QlZxfRx1RbwTEuJHYZ3aF71']; // 30 tokens
-                } else if (amount === 199) {
-                    config = PRICE_CONFIGS['price_1QlZybRx1RbwTEuJTo32RGaA']; // 90 tokens
-                } else if (amount === 799) {
-                    config = PRICE_CONFIGS['price_1QnW04Rx1RbwTEuJiRQ4ByZZ'];
-                }
+                // Get line items to determine the price ID directly
+                const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+                const priceId = lineItems.data[0].price.id;
+                
+                // Get configuration based on price ID
+                const config = PRICE_CONFIGS[priceId];
 
                 if (!config) {
-                    throw new Error(`Unknown payment amount: ${amount}`);
+                    throw new Error(`Unknown price ID: ${priceId}`);
                 }
 
                 console.log('Selected config:', config);
