@@ -30,7 +30,7 @@ const PRICE_CONFIGS = {
     'price_1Qmkn9Rx1RbwTEuJJi5mDzKo': { 
         tokens: -1, 
         tier: 'pro', 
-        price: 1000,
+        price: 799,
         name: 'Unlimited Pro Package'
     }
 };
@@ -99,11 +99,11 @@ export async function POST(req) {
                 // Determine package based on amount
                 let config;
                 if (amount === 99) {
-                    config = PRICE_CONFIGS['price_1QmUNjRx1RbwTEuJ585357jc']; // 30 tokens
+                    config = PRICE_CONFIGS['price_1QlZxfRx1RbwTEuJHYZ3aF71']; // 30 tokens
                 } else if (amount === 199) {
-                    config = PRICE_CONFIGS['price_1Qmkm1Rx1RbwTEuJMWHZO0iS']; // 90 tokens
-                } else if (amount === 1000) {
-                    config = PRICE_CONFIGS['price_1Qmkn9Rx1RbwTEuJJi5mDzKo']; // Unlimited
+                    config = PRICE_CONFIGS['price_1QlZybRx1RbwTEuJTo32RGaA']; // 90 tokens
+                } else if (amount === 799) {
+                    config = PRICE_CONFIGS['price_1QnW04Rx1RbwTEuJiRQ4ByZZ']; // Unlimited
                 } else {
                     throw new Error(`Unknown payment amount: ${amount}`);
                 }
