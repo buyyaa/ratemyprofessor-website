@@ -7,7 +7,9 @@ import crypto from 'crypto';
 // Remove edge runtime since we're using Node.js features
 // export const runtime = 'edge';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2023-10-16'
+});
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 // Email configuration
@@ -83,8 +85,16 @@ export async function POST(req) {
             const session = event.data.object;
             
             try {
-                const customerEmail = session.customer_details?.email;
-                console.log('Processing purchase for:', customerEmail);
+                // Get customer details directly from the session
+                const customerDetails = session.customer_details;
+                const customerEmail = customerDetails?.email;
+                const customerName = customerDetails?.name || 'Customer';
+
+                if (!customerEmail) {
+                    throw new Error('No customer email found in session');
+                }
+                
+                console.log('Processing purchase for:', customerName, customerEmail);
 
                 // Get payment intent to get price information
                 const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent);
