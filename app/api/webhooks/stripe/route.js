@@ -27,7 +27,7 @@ const PRICE_CONFIGS = {
         price: 199,
         name: '90 Tokens Package'
     },
-    'price_1Qmkn9Rx1RbwTEuJJi5mDzKo': { 
+    'price_1QnW04Rx1RbwTEuJiRQ4ByZZ': { 
         tokens: -1, 
         tier: 'pro', 
         price: 799,
@@ -66,35 +66,30 @@ async function sendEmail(email, productConfig) {
 export async function POST(req) {
     try {
         const body = await req.text();
+        console.log('Webhook received:', new Date().toISOString());
+        
         const signature = req.headers.get('stripe-signature');
-
+        
         let event;
         try {
             event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
             console.log('Event type:', event.type);
         } catch (err) {
             console.error('Webhook signature verification failed:', err.message);
-            return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
+            return new Response(`Webhook Error: ${err.message}`, { status: 400 });
         }
 
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object;
             
             try {
-                // Get customer details directly from the session
-                const customerDetails = session.customer_details;
-                const customerEmail = customerDetails?.email;
-                const customerName = customerDetails?.name || 'Customer';
-
-                if (!customerEmail) {
-                    throw new Error('No customer email found in session');
-                }
-                
-                console.log('Processing purchase for:', customerName, customerEmail);
+                const customerEmail = session.customer_details?.email;
+                console.log('Processing purchase for:', customerEmail);
 
                 // Get payment intent to get price information
                 const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent);
                 const amount = paymentIntent.amount;
+                console.log('Payment amount:', amount);
 
                 // Determine package based on amount
                 let config;
@@ -103,10 +98,14 @@ export async function POST(req) {
                 } else if (amount === 199) {
                     config = PRICE_CONFIGS['price_1QlZybRx1RbwTEuJTo32RGaA']; // 90 tokens
                 } else if (amount === 799) {
-                    config = PRICE_CONFIGS['price_1QnW04Rx1RbwTEuJiRQ4ByZZ']; // Unlimited
-                } else {
+                    config = PRICE_CONFIGS['price_1QnW04Rx1RbwTEuJiRQ4ByZZ'];
+                }
+
+                if (!config) {
                     throw new Error(`Unknown payment amount: ${amount}`);
                 }
+
+                console.log('Selected config:', config);
 
                 // Connect to MongoDB
                 const client = await clientPromise;
