@@ -7,7 +7,7 @@ export default function VerificationSuccess() {
                         Email Verified Successfully!
                     </h2>
                     <p className="mt-2 text-center text-sm text-gray-600">
-                        Your email has been verified. You can now use the Professor Rater Pro extension.
+                        Your email has been verified. You can now use this email in the Professor Rater Pro extension.
                     </p>
                 </div>
             </div>
