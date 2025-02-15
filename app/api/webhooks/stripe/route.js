@@ -152,18 +152,42 @@ export async function POST(req) {
                     console.log('Updated existing user account');
                 } else {
                     console.log('Creating new user account');
-                    // Create new user with both free and purchased tokens
                     const extensionApiKey = crypto.randomUUID();
+                    const verificationToken = crypto.randomUUID();
                     await users.insertOne({
                         email: customerEmail,
                         name: customerName,
                         extensionApiKey,
                         subscriptionStatus: config.tier,
-                        tokens: 20 + config.tokens, // Free tokens + purchased tokens
-                        purchasedTokens: config.tokens, // Track purchased tokens separately
+                        tokens: 20 + config.tokens,
+                        purchasedTokens: config.tokens,
+                        verified: false,
+                        verificationToken,
                         lastTokenRefreshDate: new Date(),
                         createdAt: new Date(),
                         updatedAt: new Date()
+                    });
+
+                    // Send verification email
+                    await transporter.sendMail({
+                        from: process.env.EMAIL_FROM,
+                        to: customerEmail,
+                        subject: 'Verify Your Email - Professor Rater Pro',
+                        html: `
+                            <h2>Welcome to Professor Rater Pro, ${customerName}!</h2>
+                            <p>Please verify your email address by clicking the button below:</p>
+                            <a href="${process.env.NEXT_PUBLIC_APP_URL}/api/verify-email?token=${verificationToken}" 
+                               style="display: inline-block; background-color: #4CAF50; color: white; padding: 14px 25px; 
+                               text-align: center; text-decoration: none; font-size: 16px; margin: 4px 2px; 
+                               border-radius: 4px;">
+                                Verify Email
+                            </a>
+                            <p>If the button doesn't work, you can copy and paste this link in your browser:</p>
+                            <p>${process.env.NEXT_PUBLIC_APP_URL}/api/verify-email?token=${verificationToken}</p>
+                            <br>
+                            <p>Best regards,</p>
+                            <p>The Professor Rater Pro Team</p>
+                        `
                     });
                 }
 
