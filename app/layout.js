@@ -5,6 +5,10 @@ import './globals.css';
 
 const font = Inter({ subsets: ['latin'] });
 
+if (typeof window !== 'undefined') {
+  console.log = console.warn = console.error = () => {};
+}
+
 export const viewport = {
     themeColor: config.colors.main,
     width: 'device-width',
