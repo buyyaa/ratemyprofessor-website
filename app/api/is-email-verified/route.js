@@ -13,8 +13,11 @@ export async function GET(request) {
         const { db } = await connectToDatabase();
         const user = await db.collection('users').findOne({ email });
 
+        // Debug log to see what we're getting from the database
+        console.log('Found user:', user);
+
         return NextResponse.json({
-            verified: user?.verified || false,
+            isVerified: user?.verified || false,
             tokens: user?.tokens || 0
         });
     } catch (error) {
