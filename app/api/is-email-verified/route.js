@@ -14,7 +14,7 @@ export async function GET(request) {
         const user = await db.collection('users').findOne({ email });
 
         return NextResponse.json({
-            isVerified: user?.isVerified || false,
+            verified: user?.verified || false,
             tokens: user?.tokens || 0
         });
     } catch (error) {
