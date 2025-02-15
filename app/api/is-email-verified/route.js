@@ -17,7 +17,7 @@ export async function GET(request) {
 
     try {
         await client.connect();
-        const database = client.db('test');
+        const database = client.db('ratemyprofessor-db');
         const users = database.collection('users');
 
         // Update the query to look for the email in the correct field
