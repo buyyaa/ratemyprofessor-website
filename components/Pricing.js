@@ -286,9 +286,10 @@ const Pricing = () => {
                     <div className="fixed top-0 left-0 w-full bg-green-600 text-white py-4 px-6 flex justify-between items-center z-50">
                         <div className="flex-1 text-center">
                             <p className="font-semibold">🎉 Almost there! Complete your setup:</p>
-                            <p>1. Open the Professor Rater Pro extension</p>
-                            <p>2. Enter this same email: {email}</p>
-                            <p>3. Click verify to start using your free tokens</p>
+                            <p>1. Confirm your email by clicking the link in the email we sent you</p>
+                            <p>2. Open the Professor Rater Pro extension</p>
+                            <p>3. Enter this same email: {email}</p>
+                            <p>4. Click verify to start using your free tokens</p>
                         </div>
                         <button
                             onClick={() => setShowFollowUpMessage(false)}
